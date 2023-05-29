@@ -12,23 +12,27 @@ builder.Services.AddSwaggerGen();
 
 builder.Services
     .AddOptions<SendGridConfigModel>()
-    .Configure<IConfiguration>((options, config) => config.Bind("SendGrid", options));
+    .Configure<IConfiguration>((options, config) => config.Bind("service1", options));
 
+var appConfigConnectionString = builder.Configuration.GetConnectionString("appConfig");
+
+builder.Services.AddHostedService<BackgroundConfigLogger>();
+
+builder.Services.AddAzureAppConfiguration();
 builder
     .Configuration
     .AddAzureAppConfiguration(options =>
     {
-        options.Connect("AddTheConfigExplorerConnectionHere")
+        options.Connect(appConfigConnectionString)
             .UseFeatureFlags()
             .ConfigureRefresh(refresh =>
             {
                 refresh
-                    .Register("SentinelKey--FunctionApp", refreshAll: true)
-                    .SetCacheExpiration(TimeSpan.FromMinutes(5));
+                    .Register("config-version", refreshAll: true);
             })
-            .Select("FunctionApp--*")
-            .TrimKeyPrefix("FunctionApp--")
-            .ConfigureKeyVault(config => { config.SetCredential(new DefaultAzureCredential()); });
+            .Select("test--*")
+            .TrimKeyPrefix("test--")
+            .ConfigureKeyVault(config => config.SetCredential(new DefaultAzureCredential()));
     });
 
 var app = builder.Build();
@@ -40,6 +44,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseAzureAppConfiguration();
 app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();

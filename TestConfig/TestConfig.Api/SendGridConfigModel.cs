@@ -2,6 +2,9 @@ namespace TestConfig.Api;
 
 public class SendGridConfigModel
 {
-    public string ApiKey { get; set; }
-    public string ApiUri { get; set; }
+    public int Sentinel { get; set; }
+
+    public string Nonsecret { get; set; }
+
+    public string Verysecret { get; set; }
 }
