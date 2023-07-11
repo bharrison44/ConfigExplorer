@@ -5,19 +5,19 @@ POC to setup config explorer with AddAzureAppConfiguration
 ## Example Project Setup
 
 * copy the `appsettings.example.json` file to `appsettings.json`
-* populate the `appConfig` connection string with the value from the Azure App Configuration portal `Access Keys` section
+* populate the `AppConfig` connection string with the value from the Azure App Configuration portal `Access Keys` section
 * setup a KeyVault instance with a secret - the name and contents is not important
 * setup an App Configuration instance with
-    * a key-value configuration item with the name `config-version` and a value of `0`
-    * a key-value configuration item with the name `test--service1:nonsecret` and any non-empty value
-    * a KeyVault reference configuration item for the KeyVault secret with the name `test--service1:verysecret`
+    * a key-value configuration item with the name `ConfigVersion` and a value of `0`
+    * a key-value configuration item with the name `test--Example:NonSecret` and any non-empty value
+    * a KeyVault reference configuration item for the KeyVault secret with the name `test--Example:KvSecret`
 
 ## App Configuration Pattern Recommendation
 
 ### Azure App Configuration Setup
 
 * add a iteration tracking config value to the App Configuration instance
-    * can be named and contain anything, but recommended is `config-version` containing an integer that gets incremented when config is updated
+    * can be named and contain anything, but recommended is `ConfigVersion` containing an integer that gets incremented when config is updated
 * add configuration values named in the following format `{prefix}--{section}:{item}`
     * prefix is optional, but recommended
     * can be key-value or KeyVault reference - it makes no difference
@@ -41,11 +41,11 @@ builder.Services.AddAzureAppConfiguration();
 ```c#
 builder.Services
     .AddOptions<ExampleConfigModel>()
-    .Configure<IConfiguration>((options, config) => config.Bind("exampleSection", options));
+    .Configure<IConfiguration>((options, config) => config.Bind("ExampleSection", options));
 ```
 
 ```c#
-var appConfigConnectionString = builder.Configuration.GetConnectionString("appConfig");
+var appConfigConnectionString = builder.Configuration.GetConnectionString("AppConfig");
 ```
 
 * add config setup to `Program.cs`/`Setup.cs`
@@ -100,6 +100,7 @@ IOptionsSnapshot<ExampleConfigBindingModel> config =
 
 ## Notes
 
-* Config only updates on requests after the cache has expired, but seems to update AFTER the triggering request complete, meaning it's not until the next request that the configuration is updated
+* config only updates on requests after the cache has expired, but seems to update AFTER the triggering request complete, meaning it's not until the next request that the configuration is updated
 * `IOptionsMonitor<T>` never updates - it seems that the app config updating mechanism differs from the standard config reloading system
 * config loaded from azure doesn't need to have stubs in `appsettings.json`
+* the iteration tracking config value can be accessed in the app, but must have the appropriate prefix if `Select` and `TrimKeyPrefix` are used in `AddAzureAppConfiguration`
