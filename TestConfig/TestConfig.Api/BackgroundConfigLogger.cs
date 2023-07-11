@@ -1,48 +1,59 @@
 ﻿using Microsoft.Extensions.Options;
-using System;
 
-namespace TestConfig.Api
+namespace TestConfig.Api;
+
+/// <summary>
+/// Background service that logs configuration
+/// </summary>
+public class BackgroundConfigLogger : BackgroundService
 {
-    public class BackgroundConfigLogger : BackgroundService
+    private readonly IConfiguration _Configuration;
+    private readonly IServiceProvider _ServiceProvider;
+    private readonly ILogger<BackgroundConfigLogger> _Logger;
+
+    /// <summary>
+    /// Constructor for this service.
+    /// </summary>
+    /// <param name="configuration">.NETs configuration object.</param>
+    /// <param name="serviceProvider">The service provider.</param>
+    /// <param name="logger">The logger.</param>
+    public BackgroundConfigLogger(
+        IConfiguration configuration,
+        IServiceProvider serviceProvider,
+        ILogger<BackgroundConfigLogger> logger)
     {
-        private readonly IConfiguration _CtorConfiguration;
-        private readonly IServiceProvider _ServiceProvider;
-        private readonly ILogger<BackgroundConfigLogger> _Logger;
+        _Configuration = configuration;
+        _ServiceProvider = serviceProvider;
+        _Logger = logger;
+    }
 
-        public BackgroundConfigLogger(
-            IConfiguration ctorConfiguration,
-            IServiceProvider serviceProvider,
-            ILogger<BackgroundConfigLogger> logger)
+    /// <inheritdoc />
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+        while (!stoppingToken.IsCancellationRequested)
         {
-            _CtorConfiguration = ctorConfiguration;
-            _ServiceProvider = serviceProvider;
-            _Logger = logger;
+            LogFromConfigObj();
+            LogFromBinding();
+
+            await Task.Delay(1000, stoppingToken);
         }
+    }
 
-        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
-        {
-            while (!stoppingToken.IsCancellationRequested)
-            {
-                //using var scope = _ServiceProvider.CreateScope();
-                //var config = scope.ServiceProvider.GetRequiredService<IOptionsSnapshot<SendGridConfigModel>>();
-                var localConfiguration = _ServiceProvider.GetRequiredService<IConfiguration>();
+    private void LogFromConfigObj()
+    {
+        var section = _Configuration.GetSection("Example");
 
-                Log("Local", localConfiguration);
-                Log("Ctor", _CtorConfiguration);
+        var nonSecret = section["NonSecret"];
+        var verySecret = section["KvSecret"];
 
-                await Task.Delay(1000);
-            }
-        }
+        _Logger.LogInformation($"[{DateTime.UtcNow.TimeOfDay}] Config Obj: {nonSecret} -- {verySecret}");
+    }
 
-        private void Log(string label, IConfiguration configuration)
-        {
-            var section = configuration.GetSection("service1");
+    private void LogFromBinding()
+    {
+        using var scope = _ServiceProvider.CreateScope();
+        var config = scope.ServiceProvider.GetRequiredService<IOptionsSnapshot<ExampleConfigModel>>();
 
-            var nonsecret = section["nonsecret"];
-            var verysecret = section["verysecret"];
-
-            _Logger.LogInformation($"[{DateTime.UtcNow.TimeOfDay}] {label}: {nonsecret} -- {verysecret}");
-
-        }
+        _Logger.LogInformation($"[{DateTime.UtcNow.TimeOfDay}] Binding: {config.Value.NonSecret} -- {config.Value.KvSecret}");
     }
 }

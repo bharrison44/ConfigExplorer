@@ -11,11 +11,12 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services
-    .AddOptions<SendGridConfigModel>()
-    .Configure<IConfiguration>((options, config) => config.Bind("service1", options));
+    .AddOptions<ExampleConfigModel>()
+    .Configure<IConfiguration>((options, config) => config.Bind("Example", options));
 
-var appConfigConnectionString = builder.Configuration.GetConnectionString("appConfig");
+var appConfigConnectionString = builder.Configuration.GetConnectionString("AppConfig");
 
+// Background service 
 builder.Services.AddHostedService<BackgroundConfigLogger>();
 
 builder.Services.AddAzureAppConfiguration();
@@ -27,8 +28,7 @@ builder
             .UseFeatureFlags()
             .ConfigureRefresh(refresh =>
             {
-                refresh
-                    .Register("config-version", refreshAll: true);
+                refresh.Register("ConfigVersion", refreshAll: true);
             })
             .Select("test--*")
             .TrimKeyPrefix("test--")

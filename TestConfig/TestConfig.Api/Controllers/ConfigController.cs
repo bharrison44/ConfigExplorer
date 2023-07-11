@@ -3,30 +3,33 @@ using Microsoft.Extensions.Options;
 
 namespace TestConfig.Api.Controllers;
 
+/// <summary>
+/// API controller that uses configuration values.
+/// </summary>
 [ApiController]
 [Route("[controller]")]
 public class ConfigController : ControllerBase
 {
-    private readonly IOptionsSnapshot<SendGridConfigModel> _configuration;
-    private readonly IConfiguration _RawConfiguration;
+    private readonly IOptionsSnapshot<ExampleConfigModel> _ConfigBinding;
 
-    public ConfigController(IOptionsSnapshot<SendGridConfigModel> configuration, IConfiguration rawConfiguration)
+    /// <summary>
+    /// Constructor for this controller.
+    /// </summary>
+    /// <param name="configBinding">The bound configuration model.</param>
+    public ConfigController(IOptionsSnapshot<ExampleConfigModel> configBinding)
     {
-        _configuration = configuration;
-        _RawConfiguration = rawConfiguration;
+        _ConfigBinding = configBinding;
     }
-
+    
+    /// <summary>
+    /// Get the configuration values.
+    /// </summary>
     [HttpGet(Name = "GetConfigValue")]
     public IActionResult Get()
     {
-        var nonsecret = _configuration.Value.Nonsecret;
-        var verysecret = _configuration.Value.Verysecret;
-        var version = _configuration.Value.Sentinel;
-
-        var rawNonsecret = _RawConfiguration.GetSection("service1")["nonsecret"];
-        var rawVerysecret = _RawConfiguration.GetSection("service1")["verysecret"];
-        var rawVersion = _RawConfiguration.GetSection("service1")["sentinel"];
-
-        return Ok($"{version} -- {nonsecret} -- {verysecret} //// {rawVersion} - {rawNonsecret} - {rawVerysecret}");
+        var nonSecret = _ConfigBinding.Value.NonSecret;
+        var verySecret = _ConfigBinding.Value.KvSecret;
+        
+        return Ok($"{nonSecret} -- {verySecret}");
     }
 }
