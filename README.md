@@ -62,7 +62,7 @@ builder
         options.Connect(appConfigConnectionString)
             .ConfigureRefresh(refresh =>
             {
-                refresh.Register("config-version", refreshAll: true);
+                refresh.Register("ConfigVersion", refreshAll: true);
             })
             .Select("example--*")
             .TrimKeyPrefix("example--")
@@ -93,7 +93,7 @@ IOptionsSnapshot<ExampleConfigBindingModel> config =
 ### Configuration Update Process
 
 * make updates to config values in Azure App Configuration or Key Vault
-* update the iteration tracking config value ie `config-version`
+* update the iteration tracking config value ie `ConfigVersion`
 * wait the configured cache lifetime duration
 * make a request to trigger the refresh - note this will not have access to the new value yet
 * make another request, which will have the updated configuration values
